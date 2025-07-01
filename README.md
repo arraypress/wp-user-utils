@@ -11,6 +11,7 @@ A lightweight WordPress library for working with users and user metadata. Provid
 * 🔐 **Authentication**: Simple authentication status checks
 * 📊 **Meta Operations**: User meta handling with type safety
 * 🚀 **Bulk Operations**: Process multiple users efficiently
+* ➕ **User Creation**: Create single or multiple users with flexible options
 
 ## Requirements
 
@@ -40,6 +41,22 @@ $user = User::get(); // Gets current user if ID is 0
 if ( User::exists( 123 ) ) {
 	// User exists
 }
+
+// Create a new user
+$user = User::create( 'johndoe', 'john@example.com' );
+
+// Create user with additional data
+$user = User::create( 'johndoe', 'john@example.com', [
+	'user_pass'    => 'custom_password',
+	'role'         => 'editor',
+	'display_name' => 'John Doe',
+	'first_name'   => 'John',
+	'last_name'    => 'Doe',
+	'description'  => 'Content editor'
+] );
+
+// Create user only if they don't exist
+$user = User::create_if_not_exists( 'johndoe', 'john@example.com' );
 
 // Get user by different identifiers
 $user = User::get_by_email( 'user@example.com' );
@@ -93,6 +110,70 @@ use ArrayPress\UserUtils\Users;
 // Get multiple users
 $users = Users::get( [ 1, 2, 3 ] );
 
+// Create multiple users
+$result = Users::create( [
+	[
+		'user_login'   => 'johndoe',
+		'user_email'   => 'john@example.com',
+		'display_name' => 'John Doe',
+		'role'         => 'editor'
+	],
+	[
+		'user_login'   => 'janedoe',
+		'user_email'   => 'jane@example.com',
+		'display_name' => 'Jane Doe',
+		'role'         => 'author'
+	]
+] );
+
+// Create users with shared defaults
+$result = Users::create( [
+	[
+		'user_login' => 'user1',
+		'user_email' => 'user1@example.com'
+	],
+	[
+		'user_login' => 'user2',
+		'user_email' => 'user2@example.com'
+	]
+], [
+	'role' => 'subscriber', // Default role for all users
+	'send_user_notification' => false
+] );
+
+// Create users only if they don't exist
+$result = Users::create_if_not_exists( [
+	[
+		'user_login' => 'admin',
+		'user_email' => 'admin@example.com',
+		'role'       => 'administrator'
+	],
+	[
+		'user_login' => 'editor',
+		'user_email' => 'editor@example.com',
+		'role'       => 'editor'
+	]
+] );
+
+// Check results
+if ( ! empty( $result['created'] ) ) {
+	foreach ( $result['created'] as $user ) {
+		echo "Created user: " . $user->user_login . "\n";
+	}
+}
+
+if ( ! empty( $result['existing'] ) ) {
+	foreach ( $result['existing'] as $user ) {
+		echo "User already exists: " . $user->user_login . "\n";
+	}
+}
+
+if ( ! empty( $result['errors'] ) ) {
+	foreach ( $result['errors'] as $error ) {
+		echo "Error: " . $error . "\n";
+	}
+}
+
 // Get users by identifiers (IDs, emails, usernames)
 $user_ids     = Users::get_by_identifiers( [ 'admin', 'user@example.com', 123 ] );
 $user_objects = Users::get_by_identifiers( [ 'admin', 'user@example.com' ], true );
@@ -135,6 +216,77 @@ $existing_users = Users::exists( [ 1, 2, 3, 999 ] ); // Returns [1, 2, 3]
 $clean_ids      = Users::sanitize( [ '1', 'invalid', '3' ] ); // Returns [1, 3]
 ```
 
+### User Creation Examples
+
+```php
+// Plugin activation - create default users
+function create_default_users() {
+	$default_users = [
+		[
+			'user_login'   => 'site_manager',
+			'user_email'   => 'manager@yoursite.com',
+			'display_name' => 'Site Manager',
+			'role'         => 'editor'
+		],
+		[
+			'user_login'   => 'content_writer',
+			'user_email'   => 'writer@yoursite.com',
+			'display_name' => 'Content Writer',
+			'role'         => 'author'
+		]
+	];
+
+	$result = Users::create_if_not_exists( $default_users );
+
+	// Log creation results
+	error_log( sprintf( 'Created %d users, %d already existed',
+		count( $result['created'] ),
+		count( $result['existing'] )
+	) );
+}
+
+// Import users from CSV data
+function import_users_from_csv( $csv_data ) {
+	$users = [];
+
+	foreach ( $csv_data as $row ) {
+		$users[] = [
+			'user_login'   => $row['username'],
+			'user_email'   => $row['email'],
+			'display_name' => $row['full_name'],
+			'role'         => $row['role'] ?? 'subscriber'
+		];
+	}
+
+	return Users::create( $users, [
+		'send_user_notification' => false // Don't email new users
+	] );
+}
+
+// Create test users for development
+function create_test_users() {
+	$test_users = [
+		'Test Admin'      => 'administrator',
+		'Test Editor'     => 'editor',
+		'Test Author'     => 'author',
+		'Test Subscriber' => 'subscriber'
+	];
+
+	$users_data = [];
+	foreach ( $test_users as $name => $role ) {
+		$username     = strtolower( str_replace( ' ', '_', $name ) );
+		$users_data[] = [
+			'user_login'   => $username,
+			'user_email'   => $username . '@test.local',
+			'display_name' => $name,
+			'role'         => $role
+		];
+	}
+
+	return Users::create_if_not_exists( $users_data );
+}
+```
+
 ### Search Functionality
 
 ```php
@@ -157,7 +309,7 @@ $options = Users::search_options( 'admin' );
 
 ```php
 // Validate user ID with current user fallback
-$user_id = User::validate_user_id( 0, true ); // Returns current user ID if logged in
+$user_id = User::validate_id( 0, true ); // Returns current user ID if logged in
 
 // Check which users exist
 $existing = Users::exists( [ 1, 2, 999 ] ); // Returns [1, 2]
@@ -170,6 +322,7 @@ $clean_users = Users::sanitize( [ 'admin', 'user@example.com', 123 ] );
 
 - **Value/Label Format**: Perfect for forms and selects
 - **Search Functionality**: Built-in user search with flexible options
+- **User Creation**: Create single or multiple users with validation
 - **Meta Operations**: Simple user meta handling
 - **Bulk Operations**: Process multiple users efficiently
 - **Authentication Helpers**: Login status and current user checks

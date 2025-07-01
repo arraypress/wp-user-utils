@@ -529,4 +529,59 @@ class User {
 		return wp_delete_user( $user->ID, $reassign_to );
 	}
 
+	/**
+	 * Create a new user.
+	 *
+	 * @param string $username The username for the new user.
+	 * @param string $email    The email address for the new user.
+	 * @param array  $args     Optional arguments (password, role, display_name, etc.).
+	 *
+	 * @return WP_User|null The created user object or null on failure.
+	 */
+	public static function create( string $username, string $email, array $args = [] ): ?WP_User {
+		if ( empty( $username ) || empty( $email ) || ! is_email( $email ) ) {
+			return null;
+		}
+
+		// Set default password if not provided
+		if ( ! isset( $args['user_pass'] ) ) {
+			$args['user_pass'] = wp_generate_password();
+		}
+
+		$user_data = array_merge( [
+			'user_login' => $username,
+			'user_email' => $email,
+		], $args );
+
+		$user_id = wp_insert_user( $user_data );
+
+		if ( is_wp_error( $user_id ) ) {
+			return null;
+		}
+
+		return self::get( $user_id, false );
+	}
+
+	/**
+	 * Create user if they don't exist.
+	 *
+	 * @param string $username The username for the new user.
+	 * @param string $email    The email address for the new user.
+	 * @param array  $args     Optional arguments.
+	 *
+	 * @return WP_User|null The user object (created or existing) or null on failure.
+	 */
+	public static function create_if_not_exists( string $username, string $email, array $args = [] ): ?WP_User {
+		$existing_user = self::get_by_login( $username );
+		if ( ! $existing_user ) {
+			$existing_user = self::get_by_email( $email );
+		}
+
+		if ( $existing_user ) {
+			return $existing_user;
+		}
+
+		return self::create( $username, $email, $args );
+	}
+
 }

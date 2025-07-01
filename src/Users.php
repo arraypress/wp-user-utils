@@ -385,4 +385,99 @@ class Users {
 		return self::get_by_identifiers( $identifiers, $return_objects );
 	}
 
+	/**
+	 * Create multiple users.
+	 *
+	 * @param array $users    Array of user data arrays.
+	 * @param array $defaults Default arguments for all users.
+	 *
+	 * @return array Array of created user objects and errors.
+	 *               Format: ['created' => [WP_User, ...], 'errors' => [error_msg, ...]]
+	 */
+	public static function create( array $users, array $defaults = [] ): array {
+		$result = [
+			'created' => [],
+			'errors'  => []
+		];
+
+		if ( empty( $users ) ) {
+			return $result;
+		}
+
+		foreach ( $users as $user_data ) {
+			if ( ! is_array( $user_data ) || empty( $user_data['user_login'] ) || empty( $user_data['user_email'] ) ) {
+				$result['errors'][] = 'Invalid user data format - user_login and user_email required';
+				continue;
+			}
+
+			$username = $user_data['user_login'];
+			$email    = $user_data['user_email'];
+			$args     = array_merge( $defaults, array_diff_key( $user_data, [
+				'user_login' => '',
+				'user_email' => ''
+			] ) );
+
+			$user = User::create( $username, $email, $args );
+
+			if ( $user ) {
+				$result['created'][] = $user;
+			} else {
+				$result['errors'][] = "Failed to create user: {$username}";
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Create users if they don't exist.
+	 *
+	 * @param array $users    Array of user data arrays.
+	 * @param array $defaults Default arguments.
+	 *
+	 * @return array Array with 'created', 'existing', and 'errors' keys.
+	 */
+	public static function create_if_not_exists( array $users, array $defaults = [] ): array {
+		$result = [
+			'created'  => [],
+			'existing' => [],
+			'errors'   => []
+		];
+
+		foreach ( $users as $user_data ) {
+			if ( ! is_array( $user_data ) || empty( $user_data['user_login'] ) || empty( $user_data['user_email'] ) ) {
+				$result['errors'][] = 'Invalid user data format - user_login and user_email required';
+				continue;
+			}
+
+			$username = $user_data['user_login'];
+			$email    = $user_data['user_email'];
+
+			// Check if user exists by username or email
+			$existing_user = User::get_by_login( $username );
+			if ( ! $existing_user ) {
+				$existing_user = User::get_by_email( $email );
+			}
+
+			if ( $existing_user ) {
+				$result['existing'][] = $existing_user;
+			} else {
+				// Create new user
+				$args = array_merge( $defaults, array_diff_key( $user_data, [
+					'user_login' => '',
+					'user_email' => ''
+				] ) );
+				$user = User::create( $username, $email, $args );
+
+				if ( $user ) {
+					$result['created'][] = $user;
+				} else {
+					$result['errors'][] = "Failed to create user: {$username}";
+				}
+			}
+		}
+
+		return $result;
+	}
+
 }
