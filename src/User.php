@@ -52,7 +52,7 @@ class User {
 	 *
 	 * @return WP_User|null The user object if found, null otherwise.
 	 */
-	public static function get_by( $identifier, bool $allow_current = true ): ?WP_User {
+	public static function get_by_identifier( $identifier, bool $allow_current = true ): ?WP_User {
 		if ( empty( $identifier ) && ! is_numeric( $identifier ) ) {
 			return $allow_current && is_user_logged_in() ? self::get( get_current_user_id(), false ) : null;
 		}
@@ -160,7 +160,7 @@ class User {
 	 * @return string User's full name, display name, or empty string if no user found.
 	 */
 	public static function get_full_name( $identifier = 0 ): string {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return '';
 		}
@@ -181,7 +181,7 @@ class User {
 	 * @return string User email or default value.
 	 */
 	public static function get_email( $identifier = 0, string $default = '' ): string {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 
 		if ( ! $user || ! is_email( $user->user_email ) ) {
 			return $default;
@@ -199,7 +199,7 @@ class User {
 	 * @return string Display name or default value.
 	 */
 	public static function get_display_name( $identifier = 0, string $default = '' ): string {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 
 		return $user ? $user->display_name : $default;
 	}
@@ -213,7 +213,7 @@ class User {
 	 * @return string User login or default value.
 	 */
 	public static function get_login( $identifier = 0, string $default = '' ): string {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 
 		return $user ? $user->user_login : $default;
 	}
@@ -227,7 +227,7 @@ class User {
 	 * @return mixed The field value or null if not found.
 	 */
 	public static function get_field( $identifier, string $field ) {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return null;
 		}
@@ -269,7 +269,7 @@ class User {
 	 * @return bool True if this is the current user, false otherwise.
 	 */
 	public static function is_current( $identifier ): bool {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 
 		return $user && get_current_user_id() === $user->ID;
 	}
@@ -287,7 +287,7 @@ class User {
 	 * @return bool Whether the user has the capability.
 	 */
 	public static function has_capability( $identifier, string $capability ): bool {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 
 		return $user && $user->has_cap( $capability );
 	}
@@ -300,7 +300,7 @@ class User {
 	 * @return array Array of capabilities.
 	 */
 	public static function get_capabilities( $identifier ): array {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 
 		return $user ? array_keys( $user->allcaps ) : [];
 	}
@@ -314,7 +314,7 @@ class User {
 	 * @return bool Whether the user has the role.
 	 */
 	public static function has_role( $identifier, string $role ): bool {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 
 		return $user && in_array( $role, $user->roles, true );
 	}
@@ -327,7 +327,7 @@ class User {
 	 * @return array Array of role slugs.
 	 */
 	public static function get_roles( $identifier ): array {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 
 		return $user ? $user->roles : [];
 	}
@@ -346,7 +346,7 @@ class User {
 	 * @return mixed Meta value or null if not found.
 	 */
 	public static function get_meta( $identifier, string $key, bool $single = true ) {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return null;
 		}
@@ -374,7 +374,7 @@ class User {
 	 * @return mixed Meta value or default.
 	 */
 	public static function get_meta_with_default( $identifier, string $meta_key, $default ) {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return $default;
 		}
@@ -394,7 +394,7 @@ class User {
 	 * @return bool True if value was changed.
 	 */
 	public static function update_meta_if_changed( $identifier, string $meta_key, $meta_value ): bool {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return false;
 		}
@@ -417,7 +417,7 @@ class User {
 	 * @return bool True on success.
 	 */
 	public static function delete_meta( $identifier, string $meta_key ): bool {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return false;
 		}
@@ -438,7 +438,7 @@ class User {
 	 * @return string|null Formatted date or null if user not found.
 	 */
 	public static function get_registration_date( $identifier = 0, string $format = 'Y-m-d H:i:s' ): ?string {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return null;
 		}
@@ -454,7 +454,7 @@ class User {
 	 * @return int|null Number of days since registration, or null if user not found.
 	 */
 	public static function get_account_age( $identifier = 0 ): ?int {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return null;
 		}
@@ -472,7 +472,7 @@ class User {
 	 * @return string|null Human-readable time difference or null if user not found.
 	 */
 	public static function get_time_since_registration( $identifier = 0 ): ?string {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return null;
 		}
@@ -512,7 +512,7 @@ class User {
 	 * @return bool True on success, false on failure.
 	 */
 	public static function delete( $identifier, ?int $reassign_to = null, bool $delete_content = false ): bool {
-		$user = self::get_by( $identifier );
+		$user = self::get_by_identifier( $identifier );
 		if ( ! $user ) {
 			return false;
 		}
