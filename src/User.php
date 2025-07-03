@@ -584,4 +584,40 @@ class User {
 		return self::create( $username, $email, $args );
 	}
 
+	/**
+	 * Get avatar HTML for a user.
+	 *
+	 * @param mixed $identifier    User identifier (ID, email, login, slug, or user object).
+	 * @param int   $size          Optional. Height and width of the avatar in pixels. Default 32.
+	 * @param array $args          Optional. Additional arguments for get_avatar().
+	 *                             {
+	 *
+	 * @type string $default       Default avatar URL or type. Default 'mystery'.
+	 * @type string $alt           Alternative text for the avatar. Default empty.
+	 * @type string $class         CSS class for the avatar. Default empty.
+	 * @type bool   $force_default Whether to force default avatar. Default false.
+	 * @type string $rating        Avatar rating. Default 'G'.
+	 *                             }
+	 *
+	 * @return string Avatar HTML img element, or empty string if user not found.
+	 */
+	public static function get_avatar( $identifier, int $size = 32, array $args = [] ): string {
+		$user = self::get_by_identifier( $identifier );
+		if ( ! $user ) {
+			return '';
+		}
+
+		$defaults = [
+			'default'       => 'mystery',
+			'alt'           => '',
+			'class'         => '',
+			'force_default' => false,
+			'rating'        => 'G'
+		];
+
+		$args = wp_parse_args( $args, $defaults );
+
+		return get_avatar( $user->user_email, $size, $args['default'], $args['alt'], $args ) ?: '';
+	}
+
 }
